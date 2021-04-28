@@ -1,0 +1,28 @@
+language: generic
+sudo: required
+
+services:
+  - docker
+
+# yükleme yapmadan önce test imaga'i oluştur
+before_install: 
+  - docker build -t test -f ./web/Dockerfile.dev ./web
+
+# test image'i çalıştırılır.
+scripts:
+  - docker run -e CI=true test npm run test
+
+# testler basarılı olursa image oluştur.
+after_success:
+  - docker build -t ms4n/web ./web
+  - docker build -t ms4n/nginx ./nginx
+  - docker build -t ms4n/api ./api
+  - docker build -t ms4n/worker ./worker
+
+# login docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+# push images to docker hub
+  - docker push  ms4n/web 
+  - docker push  ms4n/nginx 
+  - docker push  ms4n/api 
+  - docker push  ms4n/worker 
