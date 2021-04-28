@@ -1,0 +1,56 @@
+version: '3.4'
+
+services: 
+    veritabani:
+        image: postgres
+        environment: 
+            POSTGRES_PASSWORD: osmancik
+    redis:
+        image: redis
+    
+    api:
+        build: 
+            context: ./api               #docker file 'un bulundugu dizin gosterilir.
+            dockerfile: Dockerfile.dev   # docker file farklı bir isimde verildiği için adı belirtilir.
+        volumes: 
+            - ./api:/usr/app
+        environment: 
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            PGUSER: postgres
+            PGHOST: veritabani
+            PGDATABASE: postgres
+            PGPASSWORD: osmancik
+            PGPORT: 5432
+        depends_on: 
+            - veritabani
+            - redis
+    client:
+        build: 
+            context: ./web
+            dockerfile: Dockerfile.dev
+        volumes: 
+            - ./web:/usr/app
+    worker:
+        build: 
+            context: ./worker
+            dockerfile: Dockerfile.dev
+        volumes: 
+            - ./worker:/usr/app
+        environment: 
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+    nginx:
+        build: 
+            context: ./nginx
+            dockerfile: Dockerfile.dev
+        ports: 
+            - 1992:80
+        depends_on: 
+            - api
+            - client
+        restart: always
+        
+        
+
+
